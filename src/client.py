@@ -1,6 +1,8 @@
 import pickle
 import random
 import socket
+import time
+from threading import Thread
 from typing import List
 
 import pygame
@@ -58,17 +60,29 @@ def collision(rleft, rtop, width, height,   # rectangle definition
     return False  # no collision detected
 
 
-def generate_score_item(elements: int = 10) -> List[ScoreItem]:
-    points = []
+def generate_score_item() -> ScoreItem:
+    x = random.randint(0, width)
+    y = random.randint(0, height)
+    radius = random.randrange(5, 20, 5)
+    score_value = 25 - radius
+    color = (150, 105, 150)
+    return ScoreItem(x, y, radius, color, score_value)
+
+
+def generate_score_items(elements: int = 10) -> List[ScoreItem]:
+    score_items = []
     for _ in range(elements):
-        x = random.randint(0, width)
-        y = random.randint(0, height)
-        radius = random.randrange(5, 20, 5)
-        score_value = 25 - radius
-        color = (150, 105, 150)
-        score_item = ScoreItem(x, y, radius, color, score_value)
-        points.append(score_item)
-    return points
+        score_item = generate_score_item()
+        score_items.append(score_item)
+    return score_items
+
+
+def add_new_score_items(score_items: List[ScoreItem]) -> None:
+    sleep_time = 5
+    while True:
+        score_item = generate_score_item()
+        score_items.append(score_item)
+        time.sleep(sleep_time)
 
 
 def check_score_item_collision(score_items: List[ScoreItem], player: Player) -> None:
@@ -112,8 +126,10 @@ def send(player: Player):
 def main():
     run = True
     p = Player(x=0, y=0, width=25, height=25, color=(0, 255, 255))
-    score_items = generate_score_item()
+    score_items = generate_score_items()
     clock = pygame.time.Clock()
+    score_items_thread = Thread(target=add_new_score_items, args=(score_items,), daemon=True)
+    score_items_thread.start()
     while run:
         clock.tick(120)
         check_score_item_collision(score_items, p)
