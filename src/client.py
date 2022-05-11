@@ -7,6 +7,7 @@ from typing import List
 
 import pygame
 
+from read_config_value import read_config_value
 from src.player import Player
 from src.score_item import ScoreItem
 
@@ -19,8 +20,8 @@ DISCONNECT_MESSAGE = "!DISCONNECT"
 SERVER = "172.17.240.1"
 ADDR = (SERVER, PORT)
 
-width = 500
-height = 500
+width = read_config_value("screen_width")
+height = read_config_value("screen_height")
 win = pygame.display.set_mode((width, height))
 pygame.display.set_caption("Client")
 
@@ -133,6 +134,7 @@ def main():
     while run:
         clock.tick(120)
         check_score_item_collision(score_items, p)
+        # print(p.x, p.right, p.y, p.down)
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
                 run = False
