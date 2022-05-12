@@ -182,18 +182,19 @@ def fight_screen():
     render_texts([start_fight_communicate])
     timeout = time.time() + 5
     count = 0
+
+    pygame.event.clear()
     while time.time() < timeout:
+        fight_count_communicate = Communicate(
+            text=f"You press Enter: {count} times",
+            color=(255, 0, 0),
+            font_size=42,
+            coordinates=(100, 400)
+        )
+        render_texts([fight_init_communicate, fight_count_communicate])
         for event in pygame.event.get():
-            if event.type == pygame.KEYDOWN:
-                if event.key == pygame.K_RETURN:
-                    count += 1
-                    fight_count_communicate = Communicate(
-                        text=f"You press Enter: {count} times",
-                        color=(255, 0, 0),
-                        font_size=42,
-                        coordinates=(100, 400)
-                    )
-                    render_texts([fight_init_communicate, fight_count_communicate])
+            if event.type == pygame.KEYDOWN and event.key == pygame.K_RETURN:
+                count += 1
 
     if count > 20:
         text = "You won!!"
