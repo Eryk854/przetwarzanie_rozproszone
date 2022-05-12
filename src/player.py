@@ -34,7 +34,6 @@ class Player:
         if keys[pygame.K_DOWN]:
             self.y += self.vel
 
-        print(self.x + self.width)
         if self.x <= 0:
             self.x = 0
         if self.x + self.width >= SCREEN_WIDTH:

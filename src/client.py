@@ -20,9 +20,9 @@ DISCONNECT_MESSAGE = "!DISCONNECT"
 SERVER = "172.17.240.1"
 ADDR = (SERVER, PORT)
 
-width = read_config_value("screen_width")
-height = read_config_value("screen_height")
-win = pygame.display.set_mode((width, height))
+WIDTH = read_config_value("screen_width")
+HEIGHT = read_config_value("screen_height")
+win = pygame.display.set_mode((WIDTH, HEIGHT))
 pygame.display.set_caption("Client")
 
 # client = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
@@ -62,8 +62,8 @@ def collision(rleft, rtop, width, height,   # rectangle definition
 
 
 def generate_score_item() -> ScoreItem:
-    x = random.randint(0, width)
-    y = random.randint(0, height)
+    x = random.randint(0, WIDTH)
+    y = random.randint(0, HEIGHT)
     radius = random.randrange(5, 20, 5)
     score_value = 25 - radius
     color = (150, 105, 150)
@@ -102,9 +102,11 @@ def check_score_item_collision(score_items: List[ScoreItem], player: Player) -> 
             player.points += score_item.score_value
 
 
-def redrawWindow(win, player: Player, score_items: List[ScoreItem]) -> None:
+def redrawWindow(win, player: Player, score_items: List[ScoreItem], town: pygame.Rect) -> None:
     win.fill((255, 255, 255))
+    pygame.draw.rect(win, (200, 200, 200), town)
     player.draw(win)
+
     for score_item in score_items:
         pygame.draw.circle(
             surface=win,
@@ -115,7 +117,9 @@ def redrawWindow(win, player: Player, score_items: List[ScoreItem]) -> None:
 
     font = pygame.font.SysFont(name="comicsans", size=24)
     img = font.render(f"Your result: {player.points}", True, (255, 255, 0), None)
-    win.blit(img, (0, width-50))
+    win.blit(img, (0, WIDTH-50))
+
+
 
     pygame.display.update()
 
@@ -127,19 +131,23 @@ def send(player: Player):
 def main():
     run = True
     p = Player(x=0, y=0, width=25, height=25, color=(0, 255, 255))
+    town = pygame.Rect(0, 0, 200, 200)
+    town.center = (WIDTH//2, HEIGHT//2)
     score_items = generate_score_items()
     clock = pygame.time.Clock()
     score_items_thread = Thread(target=add_new_score_items, args=(score_items,), daemon=True)
     score_items_thread.start()
+
+
+
     while run:
         clock.tick(120)
         check_score_item_collision(score_items, p)
-        # print(p.x, p.right, p.y, p.down)
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
                 run = False
                 pygame.quit()
         p.move()
-        redrawWindow(win, p, score_items)
+        redrawWindow(win, p, score_items, town)
 
 main()
