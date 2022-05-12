@@ -11,6 +11,7 @@ from pygame.color import Color
 from pygame.rect import Rect
 
 from communicate import Communicate
+from fight import Fight
 from read_config_value import read_config_value
 from src.player import Player
 from src.score_item import ScoreItem
@@ -19,10 +20,12 @@ font.init()
 
 HEADER = 64
 PORT = 5051
+PORT1 = 5052
 FORMAT = 'utf-8'
 DISCONNECT_MESSAGE = "!DISCONNECT"
 SERVER = "172.17.240.1"
 ADDR = (SERVER, PORT)
+ADDR2 = (SERVER, PORT1)
 
 WIDTH = read_config_value("screen_width")
 HEIGHT = read_config_value("screen_height")
@@ -30,57 +33,7 @@ win = display.set_mode((WIDTH, HEIGHT))
 display.set_caption("Client")
 
 client = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-
-
-import math
-
-
-def collision(rleft, rtop, width, height,   # rectangle definition
-              center_x, center_y, radius):  # circle definition
-    """ Detect collision between a rectangle and circle. """
-
-    # complete boundbox of the rectangle
-    rright, rbottom = rleft + width/2, rtop + height/2
-
-    # bounding box of the circle
-    cleft, ctop     = center_x-radius, center_y-radius
-    cright, cbottom = center_x+radius, center_y+radius
-
-    # trivial reject if bounding boxes do not intersect
-    if rright < cleft or rleft > cright or rbottom < ctop or rtop > cbottom:
-        return False  # no collision possible
-
-    # check whether any point of rectangle is inside circle's radius
-    for x in (rleft, rleft+width):
-        for y in (rtop, rtop+height):
-            # compare distance between circle's center point and each point of
-            # the rectangle with the circle's radius
-            if math.hypot(x-center_x, y-center_y) <= radius:
-                return True  # collision detected
-
-    # check if center of circle is inside rectangle
-    if rleft <= center_x <= rright and rtop <= center_y <= rbottom:
-        return True  # overlaid
-
-    return False  # no collision detected
-
-
-def check_score_item_collision(score_items: List[ScoreItem], player: Player) -> None:
-    for idx, score_item in enumerate(score_items):
-        collision_flag = collision(
-            player.x,
-            player.y,
-            player.width,
-            player.height,
-            score_item.x,
-            score_item.y,
-            score_item.radius
-        )
-        if collision_flag:
-            del score_items[idx]
-            player.points += score_item.score_value
-
-
+fight_client = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 
 
 
@@ -106,6 +59,14 @@ def redraw_window(
     win.blit(img, (0, WIDTH-50))
 
     display.update()
+
+
+def generate_player_starting_point(
+        area: Rect, player_width: int, player_height: int
+) -> Tuple[int, int]:
+    x = random.randint(area.left, area.right - player_width)
+    y = random.randint(area.top, area.bottom - player_height)
+    return x, y
 
 
 
@@ -143,7 +104,7 @@ def fight_wait_screen():
             break
 
 
-def fight_screen():
+def fight_screen(fight: Fight, pl_id: int):
     fight_init_communicate = Communicate(
         text="Fight screen! Press Enter button to win",
         color=Color(255, 0, 0),
@@ -189,7 +150,11 @@ def fight_screen():
             if event.type == pygame.KEYDOWN and event.key == pygame.K_RETURN:
                 count += 1
 
-    if count > 20:
+    send_fight(pl_id, count)
+    recv_dict = pickle.loads(fight_client.recv(2048))
+    result = recv_dict["result"]
+
+    if result:
         text = "You won!!"
     else:
         text = "You lose :("
@@ -207,10 +172,17 @@ def send(player: Player):
     client.send(pickle.dumps(player))
 
 
+def send_fight(p, fight: int):
+    send_dict = {"p": p, "fight": fight}
+    fight_client.send(pickle.dumps(send_dict))
+
+
 if __name__ == "__main__":
     run = True
 
     client.connect(ADDR)
+    fight_client.connect(ADDR2)
+
     player = pickle.loads(client.recv(2048 * 2))
     clock = pygame.time.Clock()
 
@@ -230,15 +202,22 @@ if __name__ == "__main__":
         players = received_dict["players"]
         score_items = received_dict["score_items"]
 
-        # if p.rect_obj.colliderect(p2.rect_obj):
-        #     fight_screen()
-        #     player_x, player_y = generate_player_starting_point(
-        #         area=town,
-        #         player_width=player_width,
-        #         player_height=player_height
-        #     )
-        #     p.x = player_x
-        #     p.y = player_y
+        for p in players:
+            if not town.collidepoint(player.rect_obj.center):
+                if player.rect_obj.colliderect(p.rect_obj):
+
+                    recv_dict = pickle.loads(fight_client.recv(2048))
+                    pl_id = recv_dict["p"]
+                    fight = recv_dict["fight"]
+                    fight_screen(fight, pl_id)
+                    # fight_client.close()
+                    player_x, player_y = generate_player_starting_point(
+                        area=town,
+                        player_width=player_width,
+                        player_height=player_height
+                    )
+                    player.x = player_x
+                    player.y = player_y
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
                 run = False

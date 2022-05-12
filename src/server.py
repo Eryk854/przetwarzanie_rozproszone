@@ -122,7 +122,7 @@ def handle_client(conn, addr, player_id: int, score_items: List[ScoreItem]) -> N
 
             players_copy = players.copy()
             del players_copy[player_id]
-            send_dict = {"players": players, "score_items": score_items, "player": players[player_id]}
+            send_dict = {"players": players_copy, "score_items": score_items, "player": players[player_id]}
             conn.send(pickle.dumps(send_dict))
         except Exception as e:
             print(e)

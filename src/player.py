@@ -20,6 +20,7 @@ class Player:
         self.vel: int = 3
         self.points: int = 0
         self.rect_obj: pygame.Rect = pygame.Rect(self.rect)
+        self.hits: int = 0
 
     def draw(self, win):
         pygame.draw.rect(win, self.color, self.rect)
