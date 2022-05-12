@@ -1,2 +1,6 @@
 screen_width: 800
 screen_height: 800
+town_width: 200
+town_height: 200
+player_width: 25
+player_height: 25
