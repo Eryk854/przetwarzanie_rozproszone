@@ -18,6 +18,7 @@ class Player:
         self.rect: Tuple[int, int, int, int] = (x, y, width, height)
         self.vel: int = 3
         self.points: int = 0
+        self.rect_obj: pygame.Rect = pygame.Rect(self.rect)
 
     def draw(self, win):
         pygame.draw.rect(win, self.color, self.rect)
@@ -47,3 +48,4 @@ class Player:
 
     def update(self):
         self.rect = (self.x, self.y, self.width, self.height)
+        self.rect_obj = pygame.Rect(self.rect)
