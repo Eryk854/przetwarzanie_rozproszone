@@ -1,6 +1,7 @@
 from typing import Tuple
 
 import pygame
+from pygame.color import Color
 
 from read_config_value import read_config_value
 
@@ -9,12 +10,12 @@ SCREEN_HEIGHT = read_config_value("screen_height")
 
 
 class Player:
-    def __init__(self, x: int, y: int, width: int, height: int, color: Tuple[int, int, int]) -> None:
+    def __init__(self, x: int, y: int, width: int, height: int, color: Color) -> None:
         self.x: int = x
         self.y: int = y
         self.width: int = width
         self.height: int = height
-        self.color: Tuple[int, int, int] = color
+        self.color: Color = color
         self.rect: Tuple[int, int, int, int] = (x, y, width, height)
         self.vel: int = 3
         self.points: int = 0

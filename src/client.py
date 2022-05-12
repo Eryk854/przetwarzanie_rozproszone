@@ -6,6 +6,7 @@ from threading import Thread
 from typing import List, Tuple
 
 import pygame
+from pygame.color import Color
 
 from communicate import Communicate
 from read_config_value import read_config_value
@@ -72,7 +73,7 @@ def generate_score_item() -> ScoreItem:
         y = random.randint(0, HEIGHT)
 
     score_value = 25 - radius
-    color = (150, 105, 150)
+    color = Color(150, 105, 150)
     return ScoreItem(x, y, radius, color, score_value)
 
 
@@ -116,7 +117,7 @@ def generate_player_starting_point(
     return x, y
 
 
-def redrawWindow(win, player: Player, player2: Player, score_items: List[ScoreItem], town: pygame.Rect) -> None:
+def redraw_window(win, player: Player, player2: Player, score_items: List[ScoreItem], town: pygame.Rect) -> None:
     win.fill((255, 255, 255))
     pygame.draw.rect(win, (200, 200, 200), town)
     player.draw(win)
@@ -144,7 +145,7 @@ def send(player: Player):
 
 
 def render_texts(communicates: List[Communicate]) -> None:
-    win.fill((255, 255, 255))
+    win.fill(Color(255, 255, 255))
     for communicate in communicates:
         font = pygame.font.SysFont(communicate.font_name, communicate.font_size)
         text = font.render(communicate.text, communicate.antialias, communicate.color)
@@ -152,10 +153,33 @@ def render_texts(communicates: List[Communicate]) -> None:
     pygame.display.update()
 
 
+def fight_wait_screen():
+    fight_time_wait = read_config_value("fight_time_wait")
+    fight_init_communicate = Communicate(
+        text="Fight screen! Press Enter button to win",
+        color=Color(255, 0, 0),
+        font_size=42,
+        coordinates=(100, 200)
+    )
+    render_texts([fight_init_communicate])
+    start_ticks = pygame.time.get_ticks()
+    while True:
+        seconds = (pygame.time.get_ticks() - start_ticks) / 1000
+        fight_count_communicate = Communicate(
+            text=f"Fight starts in {round(fight_time_wait - seconds, 2)}",
+            color=Color(255, 0, 0),
+            font_size=42,
+            coordinates=(100, 400)
+        )
+        render_texts([fight_init_communicate, fight_count_communicate])
+        if seconds > fight_time_wait:
+            break
+
+
 def fight_screen():
     fight_init_communicate = Communicate(
         text="Fight screen! Press Enter button to win",
-        color=(255, 0, 0),
+        color=Color(255, 0, 0),
         font_size=42,
         coordinates=(100, 200)
     )
@@ -166,7 +190,7 @@ def fight_screen():
         seconds = (pygame.time.get_ticks() - start_ticks) / 1000
         fight_count_communicate = Communicate(
             text=f"Fight starts in {round(5 - seconds, 2)}",
-            color=(255, 0, 0),
+            color=Color(255, 0, 0),
             font_size=42,
             coordinates=(100, 400)
         )
@@ -175,19 +199,21 @@ def fight_screen():
             break
     start_fight_communicate = Communicate(
         text=f"Start fight! Press Enter button to win",
-        color=(255, 0, 0),
+        color=Color(255, 0, 0),
         font_size=42,
         coordinates=(100, 400)
     )
     render_texts([start_fight_communicate])
-    timeout = time.time() + 5
+
+    fight_time = read_config_value("fight_time")
+    timeout = time.time() + fight_time
     count = 0
 
     pygame.event.clear()
     while time.time() < timeout:
         fight_count_communicate = Communicate(
             text=f"You press Enter: {count} times",
-            color=(255, 0, 0),
+            color=Color(255, 0, 0),
             font_size=42,
             coordinates=(100, 400)
         )
@@ -202,7 +228,7 @@ def fight_screen():
         text = "You lose :("
     fight_final_communicate = Communicate(
         text=text,
-        color=(255, 0, 0),
+        color=Color(255, 0, 0),
         font_size=42,
         coordinates=(100, 400)
     )
@@ -230,14 +256,14 @@ if __name__ == "__main__":
         y=player_y,
         width=player_width,
         height=player_height,
-        color=(0, 255, 255)
+        color=Color(0, 255, 255)
     )
     p2 = Player(
         x=15,
         y=15,
         width=player_width,
         height=player_height,
-        color=(0, 0, 255)
+        color=Color(0, 0, 255)
     )
 
     score_items = generate_score_items()
@@ -249,7 +275,6 @@ if __name__ == "__main__":
         clock.tick(120)
         check_score_item_collision(score_items, p)
         if p.rect_obj.colliderect(p2.rect_obj):
-            print("Collision")
             fight_screen()
             player_x, player_y = generate_player_starting_point(
                 area=town,
@@ -263,4 +288,4 @@ if __name__ == "__main__":
                 run = False
                 pygame.quit()
         p.move()
-        redrawWindow(win, p, p2, score_items, town)
+        redraw_window(win, p, p2, score_items, town)
