@@ -6,17 +6,19 @@ from threading import Thread
 from typing import List, Tuple
 
 import pygame
+from pygame import font, display, draw
 from pygame.color import Color
+from pygame.rect import Rect
 
 from communicate import Communicate
 from read_config_value import read_config_value
 from src.player import Player
 from src.score_item import ScoreItem
 
-pygame.font.init()
+font.init()
 
 HEADER = 64
-PORT = 5050
+PORT = 5051
 FORMAT = 'utf-8'
 DISCONNECT_MESSAGE = "!DISCONNECT"
 SERVER = "172.17.240.1"
@@ -24,11 +26,11 @@ ADDR = (SERVER, PORT)
 
 WIDTH = read_config_value("screen_width")
 HEIGHT = read_config_value("screen_height")
-win = pygame.display.set_mode((WIDTH, HEIGHT))
-pygame.display.set_caption("Client")
+win = display.set_mode((WIDTH, HEIGHT))
+display.set_caption("Client")
 
-# client = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-# client.connect(ADDR)
+client = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+
 
 import math
 
@@ -63,36 +65,6 @@ def collision(rleft, rtop, width, height,   # rectangle definition
     return False  # no collision detected
 
 
-def generate_score_item() -> ScoreItem:
-    radius = random.randrange(5, 20, 5)
-    x = random.randint(0, WIDTH)
-    y = random.randint(0, HEIGHT)
-    while (x + radius >= WIDTH) or (x - radius <= 0):
-        x = random.randint(0, WIDTH)
-    while (y + radius >= HEIGHT) or (y - radius <= 0):
-        y = random.randint(0, HEIGHT)
-
-    score_value = 25 - radius
-    color = Color(150, 105, 150)
-    return ScoreItem(x, y, radius, color, score_value)
-
-
-def generate_score_items(elements: int = 10) -> List[ScoreItem]:
-    score_items = []
-    for _ in range(elements):
-        score_item = generate_score_item()
-        score_items.append(score_item)
-    return score_items
-
-
-def add_new_score_items(score_items: List[ScoreItem]) -> None:
-    sleep_time = 5
-    while True:
-        score_item = generate_score_item()
-        score_items.append(score_item)
-        time.sleep(sleep_time)
-
-
 def check_score_item_collision(score_items: List[ScoreItem], player: Player) -> None:
     for idx, score_item in enumerate(score_items):
         collision_flag = collision(
@@ -109,22 +81,20 @@ def check_score_item_collision(score_items: List[ScoreItem], player: Player) -> 
             player.points += score_item.score_value
 
 
-def generate_player_starting_point(
-        area: pygame.Rect, player_width: int, player_height: int
-) -> Tuple[int, int]:
-    x = random.randint(area.left, area.right - player_width)
-    y = random.randint(area.top, area.bottom - player_height)
-    return x, y
 
 
-def redraw_window(win, player: Player, player2: Player, score_items: List[ScoreItem], town: pygame.Rect) -> None:
+
+def redraw_window(
+    win, player: Player, players: List[Player], score_items: List[ScoreItem], town: Rect
+) -> None:
     win.fill((255, 255, 255))
-    pygame.draw.rect(win, (200, 200, 200), town)
+    draw.rect(win, (200, 200, 200), town)
     player.draw(win)
-    player2.draw(win)
+    for p in players:
+        p.draw(win)
 
     for score_item in score_items:
-        pygame.draw.circle(
+        draw.circle(
             surface=win,
             color=score_item.color,
             center=score_item.coordinates,
@@ -135,13 +105,10 @@ def redraw_window(win, player: Player, player2: Player, score_items: List[ScoreI
     img = font.render(f"Your result: {player.points}", True, (255, 255, 0), None)
     win.blit(img, (0, WIDTH-50))
 
+    display.update()
 
 
-    pygame.display.update()
 
-
-def send(player: Player):
-     client.send(pickle.dumps(player))
 
 
 def render_texts(communicates: List[Communicate]) -> None:
@@ -150,7 +117,7 @@ def render_texts(communicates: List[Communicate]) -> None:
         font = pygame.font.SysFont(communicate.font_name, communicate.font_size)
         text = font.render(communicate.text, communicate.antialias, communicate.color)
         win.blit(text, communicate.coordinates)
-    pygame.display.update()
+    display.update()
 
 
 def fight_wait_screen():
@@ -236,56 +203,45 @@ def fight_screen():
     time.sleep(5)
 
 
+def send(player: Player):
+    client.send(pickle.dumps(player))
+
+
 if __name__ == "__main__":
     run = True
 
+    client.connect(ADDR)
+    player = pickle.loads(client.recv(2048 * 2))
+    clock = pygame.time.Clock()
+
     town_width = read_config_value("town_width")
     town_height = read_config_value("town_height")
-    town = pygame.Rect(0, 0, town_width, town_height)
-    town.center = (WIDTH//2, HEIGHT//2)
+    town = Rect(0, 0, town_width, town_height)
+    town.center = (WIDTH // 2, HEIGHT // 2)
 
     player_width = read_config_value("player_width")
     player_height = read_config_value("player_height")
-    player_x, player_y = generate_player_starting_point(
-        area=town,
-        player_width=player_width,
-        player_height=player_height
-    )
-    p = Player(
-        x=player_x,
-        y=player_y,
-        width=player_width,
-        height=player_height,
-        color=Color(0, 255, 255)
-    )
-    p2 = Player(
-        x=15,
-        y=15,
-        width=player_width,
-        height=player_height,
-        color=Color(0, 0, 255)
-    )
-
-    score_items = generate_score_items()
-    clock = pygame.time.Clock()
-    score_items_thread = Thread(target=add_new_score_items, args=(score_items,), daemon=True)
-    score_items_thread.start()
 
     while run:
         clock.tick(120)
-        check_score_item_collision(score_items, p)
-        if p.rect_obj.colliderect(p2.rect_obj):
-            fight_screen()
-            player_x, player_y = generate_player_starting_point(
-                area=town,
-                player_width=player_width,
-                player_height=player_height
-            )
-            p.x = player_x
-            p.y = player_y
+        send(player)
+        received_dict = pickle.loads(client.recv(2048 * 2))
+        player = received_dict["player"]
+        players = received_dict["players"]
+        score_items = received_dict["score_items"]
+
+        # if p.rect_obj.colliderect(p2.rect_obj):
+        #     fight_screen()
+        #     player_x, player_y = generate_player_starting_point(
+        #         area=town,
+        #         player_width=player_width,
+        #         player_height=player_height
+        #     )
+        #     p.x = player_x
+        #     p.y = player_y
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
                 run = False
                 pygame.quit()
-        p.move()
-        redraw_window(win, p, p2, score_items, town)
+        player.move()
+        redraw_window(win, player, players, score_items, town)
