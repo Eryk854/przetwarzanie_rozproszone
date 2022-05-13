@@ -150,16 +150,12 @@ def fight_screen(player: Player):
 
     send_fight(count)
     recv_dict = pickle.loads(fight_client.recv(2048))
-    result = recv_dict["result"]
+    player_win = recv_dict["player_win"]
+    user_text = recv_dict["user_text"]
+    player.fight_result_points(player_win)
 
-    if result:
-        text = "You won!!"
-        player.fight_result_points(True)
-    else:
-        text = "You lose :("
-        player.fight_result_points(False)
     fight_final_communicate = Communicate(
-        text=text,
+        text=user_text,
         color=Color(255, 0, 0),
         font_size=42,
         coordinates=(100, 400)

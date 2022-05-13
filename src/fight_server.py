@@ -9,6 +9,7 @@ from typing import List, Tuple
 from pygame.color import Color
 from pygame.rect import Rect
 
+from enums.fight_results import FightResult
 from fight import Fight
 from player import Player
 from read_config_value import read_config_value
@@ -25,21 +26,19 @@ server = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 server.bind(ADDR)
 
 
-def handle_client(conn, p, game_id) -> None:
+def handle_client(conn, fight_player_number: int, fight_id: int) -> None:
     while True:
         fight_score = int.from_bytes(conn.recv(2048), "little")
-        fight = fights[game_id]
-        fight.result[p] = fight_score
+        fight = fights[fight_id]
+        fight.result[fight_player_number] = fight_score
         while None in fight.result:
             pass
-        fight.take_winner()
+        fight.take_fight_result()
+        player_win = fight.player_win(fight_player_number)
+        text = fight.text_to_user(player_win)
+        player_win = int(player_win)
 
-        if (p == 0 and fight.winner == 0) or (p == 1 and fight.winner == 1):
-            result = 1
-        else:
-            result = 0
-
-        send_dict = pickle.dumps({"result": result})
+        send_dict = pickle.dumps({"player_win": player_win, "user_text": text})
         conn.send(send_dict)
         break
     print("Fight thread ends")
@@ -52,16 +51,15 @@ def main_thread(conn):
         data = conn.recv(2048).decode()
         if data == "fight":
             id_count += 1
-            p = 0
-            game_id = (id_count - 1) // 2
+            fight_player_number = 0
+            fight_id = (id_count - 1) // 2
 
             if id_count % 2 == 1:
-                fights[game_id] = Fight(game_id)
+                fights[fight_id] = Fight()
                 print("Creating a new game ...")
             else:
-                fights[game_id].ready = True
-                p = 1
-            thread = threading.Thread(target=handle_client, args=(conn, p, game_id))
+                fight_player_number = 1
+            thread = threading.Thread(target=handle_client, args=(conn, fight_player_number, fight_id))
             thread.start()
             thread.join()
 

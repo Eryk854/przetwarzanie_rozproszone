@@ -1,14 +1,32 @@
-class Fight:
-    def __init__(self, id):
-        self.id = id
-        self.ready = False
-        self.result = [None, None]
-        self.winner = None
+from enums.fight_results import FightResult
 
-    def take_winner(self):
+
+class Fight:
+    def __init__(self):
+        self.result = [None, None]
+        self.fight_result: FightResult = FightResult.tie
+
+    def take_fight_result(self) -> None:
         if self.result[0] > self.result[1]:
-            self.winner = 0
+            self.fight_result = FightResult.first_player
+        if self.result[0] < self.result[1]:
+            self.fight_result = FightResult.second_player
+
+    def player_win(self, player_number) -> bool:
+        if player_number == 0 and self.fight_result == FightResult.first_player:
+            return True
+        elif player_number == 1 and self.fight_result == FightResult.second_player:
+            return True
         else:
-            self.winner = 1
+            return False
+
+    def text_to_user(self, winner: bool) -> str:
+        if self.fight_result == FightResult.tie:
+            return "Tie!"
+        elif winner:
+            return "You won!!!"
+        else:
+            return "You lose :("
+
 
 
