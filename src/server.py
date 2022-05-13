@@ -127,7 +127,8 @@ def handle_client(conn, addr, player_id: int, score_items: List[ScoreItem]) -> N
         except Exception as e:
             print(e)
             break
-    del players[player]
+    del players[player_id]
+    print("Active players: ", len(players))
     print("Lost connection")
     conn.close()
 

@@ -69,9 +69,6 @@ def generate_player_starting_point(
     return x, y
 
 
-
-
-
 def render_texts(communicates: List[Communicate]) -> None:
     win.fill(Color(255, 255, 255))
     for communicate in communicates:
@@ -206,7 +203,15 @@ if __name__ == "__main__":
 
         for p in players:
             if not town.collidepoint(player.rect_obj.center):
-                if player.rect_obj.colliderect(p.rect_obj):
+                if player.rect_obj.colliderect(p.rect_obj) and not p.fight:
+                    pygame.time.delay(100)
+                    player.fight = True
+                    send(player)
+                    received_dict = pickle.loads(client.recv(2048 * 2))
+                    player = received_dict["player"]
+                    players = received_dict["players"]
+                    score_items = received_dict["score_items"]
+
                     fight_client.send(b"fight")
                     fight_screen(player)
                     player_x, player_y = generate_player_starting_point(
@@ -216,6 +221,8 @@ if __name__ == "__main__":
                     )
                     player.x = player_x
                     player.y = player_y
+                    player.fight = False
+                    pygame.time.delay(100)
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
                 run = False
