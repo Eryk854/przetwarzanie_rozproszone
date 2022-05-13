@@ -3,7 +3,7 @@ from typing import Tuple
 import pygame
 from pygame.color import Color
 
-from read_config_value import read_config_value
+from configuration.read_config_value import read_config_value
 
 SCREEN_WIDTH = read_config_value("screen_width")
 SCREEN_HEIGHT = read_config_value("screen_height")

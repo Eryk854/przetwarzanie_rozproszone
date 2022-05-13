@@ -9,9 +9,10 @@ from typing import List, Tuple
 from pygame.color import Color
 from pygame.rect import Rect
 
-from color_values import ColorValue
+from enums.color_values import ColorValue
+from configuration.read_config_value import read_config_value
 from player import Player
-from read_config_value import read_config_value
+
 from score_item import ScoreItem
 
 HEADER = 64

@@ -1,19 +1,8 @@
-import math
 import pickle
-import random
 import socket
 import threading
-import time
-from typing import List, Tuple
 
-from pygame.color import Color
-from pygame.rect import Rect
-
-from enums.fight_results import FightResult
 from fight import Fight
-from player import Player
-from read_config_value import read_config_value
-from score_item import ScoreItem
 
 HEADER = 64
 PORT = 5052
@@ -44,7 +33,7 @@ def handle_client(conn, fight_player_number: int, fight_id: int) -> None:
     print("Fight thread ends")
 
 
-def main_thread(conn):
+def main_thread(conn) -> None:
     global id_count
     print("Connected to fight server")
     while True:
@@ -66,6 +55,7 @@ def main_thread(conn):
 
 if __name__ == "__main__":
     server.listen()
+    print(f"[LISTENING] Server is listening on {SERVER}")
     id_count = 0
     fights = {}
 

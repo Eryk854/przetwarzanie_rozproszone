@@ -2,7 +2,6 @@ import pickle
 import random
 import socket
 import time
-from threading import Thread
 from typing import List, Tuple
 
 import pygame
@@ -10,9 +9,9 @@ from pygame import font, display, draw
 from pygame.color import Color
 from pygame.rect import Rect
 
-from color_values import ColorValue
+from configuration.read_config_value import read_config_value
+from enums.color_values import ColorValue
 from communicate import Communicate
-from read_config_value import read_config_value
 from src.player import Player
 from src.score_item import ScoreItem
 
