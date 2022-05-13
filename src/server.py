@@ -122,6 +122,7 @@ def handle_client(conn, addr, player_id: int, score_items: List[ScoreItem]) -> N
 
             players_copy = players.copy()
             del players_copy[player_id]
+            players_copy = list(players_copy.values())
             send_dict = {"players": players_copy, "score_items": score_items, "player": players[player_id]}
             conn.send(pickle.dumps(send_dict))
         except Exception as e:
@@ -148,7 +149,8 @@ if __name__ == "__main__":
     score_items_thread = threading.Thread(target=add_new_score_items, args=(score_items,), daemon=True)
     score_items_thread.start()
 
-    players = []
+    players = {}
+    player_id = 0
     while True:
         conn, addr = server.accept()
         player_x, player_y = generate_player_starting_point(
@@ -163,9 +165,7 @@ if __name__ == "__main__":
             height=player_height,
             color=ColorValue.BLUE.value
         )
-        players.append(player)
-        current_connection = threading.activeCount() - 2
-
-        thread = threading.Thread(target=handle_client, args=(conn, addr, current_connection, score_items))
+        players[player_id] = player
+        thread = threading.Thread(target=handle_client, args=(conn, addr, player_id, score_items))
         thread.start()
-        print(f"[ACTIVE CONNECTIONS] {current_connection}")
+        player_id += 1
