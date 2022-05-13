@@ -203,7 +203,7 @@ if __name__ == "__main__":
         score_items = received_dict["score_items"]
 
         for p in players:
-            if not town.collidepoint(player.rect_obj.center):
+            if (not town.collidepoint(player.rect_obj.center)) and (not town.collidepoint(p.rect_obj.center)):
                 if player.rect_obj.colliderect(p.rect_obj) and not p.fight:
                     pygame.time.delay(100)
                     player.fight = True
