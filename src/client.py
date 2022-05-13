@@ -17,24 +17,6 @@ from src.score_item import ScoreItem
 
 font.init()
 
-HEADER = 64
-PORT = 5051
-PORT1 = 5052
-FORMAT = 'utf-8'
-DISCONNECT_MESSAGE = "!DISCONNECT"
-SERVER = "172.17.240.1"
-ADDR = (SERVER, PORT)
-ADDR2 = (SERVER, PORT1)
-
-WIDTH = read_config_value("screen_width")
-HEIGHT = read_config_value("screen_height")
-win = display.set_mode((WIDTH, HEIGHT))
-display.set_caption("Client")
-
-client = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-fight_client = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-
-
 
 def redraw_window(
     win, player: Player, players: List[Player], score_items: List[ScoreItem], town: Rect
@@ -53,12 +35,14 @@ def redraw_window(
             center=score_item.coordinates,
             radius=score_item.radius
         )
+    player_result_communicate = Communicate(
+        text=f"Your result: {player.points}",
+        color=ColorValue.YELLOW.value,
+        font_size=36,
+        coordinates=(0, WIDTH-50)
+    )
+    player_result_communicate.render_communicate(win, False)
 
-    font = pygame.font.SysFont(name="comicsans", size=24)
-    img = font.render(f"Your result: {player.points}", True, (255, 255, 0), None)
-    win.blit(img, (0, WIDTH-50))
-
-    display.update()
 
 
 def generate_player_starting_point(
@@ -69,34 +53,25 @@ def generate_player_starting_point(
     return x, y
 
 
-def render_texts(communicates: List[Communicate]) -> None:
-    win.fill(Color(255, 255, 255))
-    for communicate in communicates:
-        font = pygame.font.SysFont(communicate.font_name, communicate.font_size)
-        text = font.render(communicate.text, communicate.antialias, communicate.color)
-        win.blit(text, communicate.coordinates)
-    display.update()
-
-
 def fight_wait_screen():
     fight_time_wait = read_config_value("fight_time_wait")
     fight_init_communicate = Communicate(
         text="Fight screen! Press Enter button to win",
-        color=Color(255, 0, 0),
+        color=ColorValue.RED.value,
         font_size=42,
         coordinates=(100, 200)
     )
-    render_texts([fight_init_communicate])
+    fight_init_communicate.render_communicate(win, True)
     start_ticks = pygame.time.get_ticks()
     while True:
         seconds = (pygame.time.get_ticks() - start_ticks) / 1000
         fight_count_communicate = Communicate(
             text=f"Fight starts in {round(fight_time_wait - seconds, 2)}",
-            color=Color(255, 0, 0),
+            color=ColorValue.RED.value,
             font_size=42,
             coordinates=(100, 400)
         )
-        render_texts([fight_init_communicate, fight_count_communicate])
+        Communicate.render_multiple_communicates([fight_init_communicate, fight_count_communicate], win)
         if seconds > fight_time_wait:
             break
 
@@ -105,11 +80,10 @@ def fight_screen(player: Player):
     fight_init_communicate = Communicate(
         text="Fight screen! Press Enter button to win",
         color=Color(255, 0, 0),
-        font_size=42,
+        font_size=36,
         coordinates=(100, 200)
     )
-
-    render_texts([fight_init_communicate])
+    fight_init_communicate.render_communicate(win, True)
     start_ticks = pygame.time.get_ticks()
     while True:
         seconds = (pygame.time.get_ticks() - start_ticks) / 1000
@@ -119,7 +93,7 @@ def fight_screen(player: Player):
             font_size=42,
             coordinates=(100, 400)
         )
-        render_texts([fight_init_communicate, fight_count_communicate])
+        Communicate.render_multiple_communicates([fight_init_communicate, fight_count_communicate], win)
         if seconds > 5:
             break
     start_fight_communicate = Communicate(
@@ -128,7 +102,7 @@ def fight_screen(player: Player):
         font_size=42,
         coordinates=(100, 400)
     )
-    render_texts([start_fight_communicate])
+    start_fight_communicate.render_communicate(win, True)
 
     fight_time = read_config_value("fight_time")
     timeout = time.time() + fight_time
@@ -142,7 +116,7 @@ def fight_screen(player: Player):
             font_size=42,
             coordinates=(100, 400)
         )
-        render_texts([fight_init_communicate, fight_count_communicate])
+        Communicate.render_multiple_communicates([fight_init_communicate, fight_count_communicate], win)
         for event in pygame.event.get():
             if event.type == pygame.KEYDOWN and event.key == pygame.K_RETURN:
                 count += 1
@@ -155,11 +129,11 @@ def fight_screen(player: Player):
 
     fight_final_communicate = Communicate(
         text=user_text,
-        color=Color(255, 0, 0),
+        color=ColorValue.RED.value,
         font_size=42,
         coordinates=(100, 400)
     )
-    render_texts([fight_final_communicate])
+    fight_final_communicate.render_communicate(win, True)
     time.sleep(5)
 
 
@@ -173,11 +147,25 @@ def send_fight(fight_score: int):
 
 
 if __name__ == "__main__":
+    SERVER_PORT = read_config_value("server_port")
+    FIGHT_SERVER_PORT = read_config_value("fight_server_port")
+    SERVER = read_config_value("server_ip")
+    FIGHT_SERVER = read_config_value("fight_server_ip")
+    SERVER_ADDR = (SERVER, SERVER_PORT)
+    FIGHT_SERVER_ADDR = (SERVER, FIGHT_SERVER_PORT)
+
+    WIDTH = read_config_value("screen_width")
+    HEIGHT = read_config_value("screen_height")
+    window_caption = read_config_value("window_caption")
+    win = display.set_mode((WIDTH, HEIGHT))
+    display.set_caption(window_caption)
+
+    client = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+    fight_client = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+    client.connect(SERVER_ADDR)
+    fight_client.connect(FIGHT_SERVER_ADDR)
+
     run = True
-
-    client.connect(ADDR)
-    fight_client.connect(ADDR2)
-
     player = pickle.loads(client.recv(2048 * 2))
     clock = pygame.time.Clock()
 
@@ -203,7 +191,7 @@ if __name__ == "__main__":
                     pygame.time.delay(100)
                     player.fight = True
                     send(player)
-                    received_dict = pickle.loads(client.recv(2048 * 2))
+                    received_dict = pickle.loads(client.recv(2048 * 4))
                     player = received_dict["player"]
                     players = received_dict["players"]
                     score_items = received_dict["score_items"]

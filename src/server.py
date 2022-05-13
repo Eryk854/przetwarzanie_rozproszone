@@ -51,7 +51,7 @@ def generate_score_items(elements: int = 10) -> List[ScoreItem]:
 
 
 def add_new_score_items(score_items: List[ScoreItem]) -> None:
-    sleep_time = 5
+    sleep_time = read_config_value("score_item_time")
     while True:
         score_item = generate_score_item()
         score_items.append(score_item)
@@ -102,6 +102,7 @@ def check_score_item_collision(score_items: List[ScoreItem], player: Player) -> 
             del score_items[idx]
             player.points += score_item.score_value
             print(player.points)
+
 
 def generate_player_starting_point(
         area: Rect, player_width: int, player_height: int
