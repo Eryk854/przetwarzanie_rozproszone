@@ -9,7 +9,7 @@ from typing import List, Tuple
 from pygame.color import Color
 from pygame.rect import Rect
 
-
+from color_values import ColorValue
 from player import Player
 from read_config_value import read_config_value
 from score_item import ScoreItem
@@ -161,7 +161,7 @@ if __name__ == "__main__":
             y=player_y,
             width=player_width,
             height=player_height,
-            color=Color(0, 255, 255)
+            color=ColorValue.BLUE.value
         )
         players.append(player)
         current_connection = threading.activeCount() - 2

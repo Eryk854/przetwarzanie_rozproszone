@@ -10,8 +10,8 @@ from pygame import font, display, draw
 from pygame.color import Color
 from pygame.rect import Rect
 
+from color_values import ColorValue
 from communicate import Communicate
-from fight import Fight
 from read_config_value import read_config_value
 from src.player import Player
 from src.score_item import ScoreItem
@@ -44,6 +44,7 @@ def redraw_window(
     draw.rect(win, (200, 200, 200), town)
     player.draw(win)
     for p in players:
+        p.color = ColorValue.RED.value
         p.draw(win)
 
     for score_item in score_items:
