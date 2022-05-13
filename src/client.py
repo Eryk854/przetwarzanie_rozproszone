@@ -104,7 +104,7 @@ def fight_wait_screen():
             break
 
 
-def fight_screen(fight: Fight, pl_id: int):
+def fight_screen():
     fight_init_communicate = Communicate(
         text="Fight screen! Press Enter button to win",
         color=Color(255, 0, 0),
@@ -150,7 +150,7 @@ def fight_screen(fight: Fight, pl_id: int):
             if event.type == pygame.KEYDOWN and event.key == pygame.K_RETURN:
                 count += 1
 
-    send_fight(pl_id, count)
+    send_fight(count)
     recv_dict = pickle.loads(fight_client.recv(2048))
     result = recv_dict["result"]
 
@@ -172,8 +172,8 @@ def send(player: Player):
     client.send(pickle.dumps(player))
 
 
-def send_fight(p, fight: int):
-    send_dict = {"p": p, "fight": fight}
+def send_fight(fight_score: int):
+    send_dict = {"fight_score": fight_score}
     fight_client.send(pickle.dumps(send_dict))
 
 
@@ -205,12 +205,8 @@ if __name__ == "__main__":
         for p in players:
             if not town.collidepoint(player.rect_obj.center):
                 if player.rect_obj.colliderect(p.rect_obj):
-
-                    recv_dict = pickle.loads(fight_client.recv(2048))
-                    pl_id = recv_dict["p"]
-                    fight = recv_dict["fight"]
-                    fight_screen(fight, pl_id)
-                    # fight_client.close()
+                    fight_client.send(b"fight")
+                    fight_screen()
                     player_x, player_y = generate_player_starting_point(
                         area=town,
                         player_width=player_width,

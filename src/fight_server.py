@@ -25,17 +25,12 @@ server = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 server.bind(ADDR)
 
 
-
 def handle_client(conn, p, game_id) -> None:
-    send_dict = {"p": p, "fight": Fight(game_id)}
-    conn.send(pickle.dumps(send_dict))
     while True:
         recv_dict = pickle.loads(conn.recv(2048))
-        result = recv_dict["fight"]
-        player = recv_dict["p"]
+        fight_score = recv_dict["fight_score"]
         fight = fights[game_id]
-        fight.result[player] = result
-        print(fight.result)
+        fight.result[p] = fight_score
         while None in fight.result:
             pass
         fight.take_winner()
@@ -47,30 +42,44 @@ def handle_client(conn, p, game_id) -> None:
 
         send_dict = pickle.dumps({"result": result})
         conn.send(send_dict)
-        conn.close()
         break
+    print("Fight thread ends")
+
+
+def main_thread(conn):
+    global id_count
+    print("Connected to fight server")
+    while True:
+        data = conn.recv(2048).decode()
+        if data == "fight":
+            id_count += 1
+            p = 0
+            game_id = (id_count - 1) // 2
+
+            if id_count % 2 == 1:
+                fights[game_id] = Fight(game_id)
+                print("Creating a new game ...")
+            else:
+                fights[game_id].ready = True
+                p = 1
+            print("id", id_count)
+            thread = threading.Thread(target=handle_client, args=(conn, p, game_id))
+            thread.start()
+            thread.join()
 
 
 if __name__ == "__main__":
     server.listen()
     id_count = 0
     fights = {}
+
     while True:
         conn, addr = server.accept()
-        current_connection = threading.activeCount() - 1
-
-        id_count += 1
-        p = 0
-        game_id = (id_count - 1) // 2
-
-        if id_count % 2 == 1:
-            fights[game_id] = Fight(game_id)
-            print("Creating a new game ...")
-        else:
-            fights[game_id].ready = True
-            p = 1
-        print(id_count)
-        print(p)
-        thread = threading.Thread(target=handle_client, args=(conn, p, game_id))
+        thread = threading.Thread(target=main_thread, args=(conn,))
         thread.start()
-        print(f"[ACTIVE CONNECTIONS] {current_connection}")
+        # current_connection = threading.activeCount() - 1
+        print("elo")
+
+
+        # print(f"[ACTIVE CONNECTIONS] {current_connection}")
+        print("tak")
