@@ -27,8 +27,7 @@ server.bind(ADDR)
 
 def handle_client(conn, p, game_id) -> None:
     while True:
-        recv_dict = pickle.loads(conn.recv(2048))
-        fight_score = recv_dict["fight_score"]
+        fight_score = int.from_bytes(conn.recv(2048), "little")
         fight = fights[game_id]
         fight.result[p] = fight_score
         while None in fight.result:
@@ -62,7 +61,6 @@ def main_thread(conn):
             else:
                 fights[game_id].ready = True
                 p = 1
-            print("id", id_count)
             thread = threading.Thread(target=handle_client, args=(conn, p, game_id))
             thread.start()
             thread.join()
@@ -77,9 +75,3 @@ if __name__ == "__main__":
         conn, addr = server.accept()
         thread = threading.Thread(target=main_thread, args=(conn,))
         thread.start()
-        # current_connection = threading.activeCount() - 1
-        print("elo")
-
-
-        # print(f"[ACTIVE CONNECTIONS] {current_connection}")
-        print("tak")

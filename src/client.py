@@ -104,7 +104,7 @@ def fight_wait_screen():
             break
 
 
-def fight_screen():
+def fight_screen(player: Player):
     fight_init_communicate = Communicate(
         text="Fight screen! Press Enter button to win",
         color=Color(255, 0, 0),
@@ -156,8 +156,10 @@ def fight_screen():
 
     if result:
         text = "You won!!"
+        player.fight_result_points(True)
     else:
         text = "You lose :("
+        player.fight_result_points(False)
     fight_final_communicate = Communicate(
         text=text,
         color=Color(255, 0, 0),
@@ -173,8 +175,8 @@ def send(player: Player):
 
 
 def send_fight(fight_score: int):
-    send_dict = {"fight_score": fight_score}
-    fight_client.send(pickle.dumps(send_dict))
+    fight_score = fight_score.to_bytes(32, "little")
+    fight_client.send(fight_score)
 
 
 if __name__ == "__main__":
@@ -206,7 +208,7 @@ if __name__ == "__main__":
             if not town.collidepoint(player.rect_obj.center):
                 if player.rect_obj.colliderect(p.rect_obj):
                     fight_client.send(b"fight")
-                    fight_screen()
+                    fight_screen(player)
                     player_x, player_y = generate_player_starting_point(
                         area=town,
                         player_width=player_width,
