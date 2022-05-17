@@ -8,10 +8,12 @@ import pygame
 from pygame import font, display, draw
 from pygame.color import Color
 from pygame.rect import Rect
+from pygame.surface import Surface
 
 from configuration.read_config_value import read_config_value
 from enums.color_values import ColorValue
 from communicate import Communicate
+from helper import get_town
 from src.player import Player
 from src.score_item import ScoreItem
 
@@ -19,7 +21,7 @@ font.init()
 
 
 def redraw_window(
-    win, player: Player, players: List[Player], score_items: List[ScoreItem], town: Rect
+    win: Surface, player: Player, players: List[Player], score_items: List[ScoreItem], town: Rect
 ) -> None:
     win.fill((255, 255, 255))
     draw.rect(win, (200, 200, 200), town)
@@ -95,20 +97,14 @@ def fight_screen(player: Player):
         Communicate.render_multiple_communicates([fight_init_communicate, fight_count_communicate], win)
         if seconds > 5:
             break
-    start_fight_communicate = Communicate(
-        text=f"Start fight! Press Enter button to win",
-        color=Color(255, 0, 0),
-        font_size=42,
-        coordinates=(100, 400)
-    )
-    start_fight_communicate.render_communicate(win, True)
-
     fight_time = read_config_value("fight_time")
     timeout = time.time() + fight_time
     count = 0
 
     pygame.event.clear()
+    pygame.event.get()
     while time.time() < timeout:
+
         fight_count_communicate = Communicate(
             text=f"You press Enter: {count} times",
             color=Color(255, 0, 0),
@@ -120,7 +116,7 @@ def fight_screen(player: Player):
             if event.type == pygame.KEYDOWN and event.key == pygame.K_RETURN:
                 count += 1
 
-    send_fight(count)
+    send_fight_score(count)
     recv_dict = pickle.loads(fight_client.recv(2048))
     player_win = recv_dict["player_win"]
     user_text = recv_dict["user_text"]
@@ -136,13 +132,25 @@ def fight_screen(player: Player):
     time.sleep(5)
 
 
-def send(player: Player):
+def chceck_if_players_fight() -> bool:
+    for p in players:
+        if (not town.collidepoint(player.rect_obj.center)) and (not town.collidepoint(p.rect_obj.center)):
+            if player.rect_obj.colliderect(p.rect_obj) and not p.fight:
+                return True
+    return False
+
+
+def send_to_server(player: Player) -> None:
     client.send(pickle.dumps(player))
 
 
-def send_fight(fight_score: int):
+def send_fight_score(fight_score: int) -> None:
     fight_score = fight_score.to_bytes(32, "little")
     fight_client.send(fight_score)
+
+
+def send_fight() -> None:
+    fight_client.send(b"fight")
 
 
 if __name__ == "__main__":
@@ -164,48 +172,42 @@ if __name__ == "__main__":
     client.connect(SERVER_ADDR)
     fight_client.connect(FIGHT_SERVER_ADDR)
 
-    run = True
-    player = pickle.loads(client.recv(2048 * 2))
-    clock = pygame.time.Clock()
-
-    town_width = read_config_value("town_width")
-    town_height = read_config_value("town_height")
-    town = Rect(0, 0, town_width, town_height)
-    town.center = (WIDTH // 2, HEIGHT // 2)
-
+    town = get_town()
     player_width = read_config_value("player_width")
     player_height = read_config_value("player_height")
 
+    player = pickle.loads(client.recv(2048 * 2))
+    clock = pygame.time.Clock()
+    run = True
     while run:
         clock.tick(120)
-        send(player)
+        send_to_server(player)
         received_dict = pickle.loads(client.recv(2048 * 2))
         player = received_dict["player"]
         players = received_dict["players"]
         score_items = received_dict["score_items"]
+        fight_flag = chceck_if_players_fight()
 
-        for p in players:
-            if (not town.collidepoint(player.rect_obj.center)) and (not town.collidepoint(p.rect_obj.center)):
-                if player.rect_obj.colliderect(p.rect_obj) and not p.fight:
-                    pygame.time.delay(100)
-                    player.fight = True
-                    send(player)
-                    received_dict = pickle.loads(client.recv(2048 * 4))
-                    player = received_dict["player"]
-                    players = received_dict["players"]
-                    score_items = received_dict["score_items"]
+        if fight_flag:
+            pygame.time.delay(100)
+            player.fight = True
+            send_to_server(player)
+            received_dict = pickle.loads(client.recv(2048 * 4))
+            player = received_dict["player"]
+            players = received_dict["players"]
+            score_items = received_dict["score_items"]
 
-                    fight_client.send(b"fight")
-                    fight_screen(player)
-                    player_x, player_y = generate_player_starting_point(
-                        area=town,
-                        player_width=player_width,
-                        player_height=player_height
-                    )
-                    player.x = player_x
-                    player.y = player_y
-                    player.fight = False
-                    pygame.time.delay(100)
+            send_fight()
+            fight_screen(player)
+            player_x, player_y = generate_player_starting_point(
+                area=town,
+                player_width=player_width,
+                player_height=player_height
+            )
+            player.x = player_x
+            player.y = player_y
+            player.fight = False
+            pygame.time.delay(100)
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
                 run = False

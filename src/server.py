@@ -11,6 +11,7 @@ from pygame.rect import Rect
 
 from enums.color_values import ColorValue
 from configuration.read_config_value import read_config_value
+from helper import get_town
 from player import Player
 
 from score_item import ScoreItem
@@ -41,8 +42,9 @@ def generate_score_items(elements: int = 10) -> List[ScoreItem]:
 def add_new_score_items(score_items: List[ScoreItem]) -> None:
     sleep_time = read_config_value("score_item_time")
     while True:
-        score_item = generate_score_item()
-        score_items.append(score_item)
+        if len(score_items) < 50:
+            score_item = generate_score_item()
+            score_items.append(score_item)
         time.sleep(sleep_time)
 
 def collision(rleft, rtop, width, height,   # rectangle definition
@@ -135,11 +137,7 @@ if __name__ == "__main__":
 
     WIDTH = read_config_value("screen_width")
     HEIGHT = read_config_value("screen_height")
-    town_width = read_config_value("town_width")
-    town_height = read_config_value("town_height")
-    town = Rect(0, 0, town_width, town_height)
-    town.center = (WIDTH // 2, HEIGHT // 2)
-
+    town = get_town()
     player_width = read_config_value("player_width")
     player_height = read_config_value("player_height")
 
