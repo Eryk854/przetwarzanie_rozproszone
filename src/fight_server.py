@@ -2,17 +2,8 @@ import pickle
 import socket
 import threading
 
+from configuration.read_config_value import read_config_value
 from fight import Fight
-
-HEADER = 64
-PORT = 5052
-SERVER = socket.gethostbyname(socket.gethostname())
-ADDR = (SERVER, PORT)
-FORMAT = 'utf-8'
-DISCONNECT_MESSAGE = "!DISCONNECT"
-
-server = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-server.bind(ADDR)
 
 
 def handle_client(conn, fight_player_number: int, fight_id: int) -> None:
@@ -45,7 +36,7 @@ def main_thread(conn) -> None:
 
             if id_count % 2 == 1:
                 fights[fight_id] = Fight()
-                print("Creating a new game ...")
+                print("Creating a new fight ...")
             else:
                 fight_player_number = 1
             thread = threading.Thread(target=handle_client, args=(conn, fight_player_number, fight_id))
@@ -54,11 +45,17 @@ def main_thread(conn) -> None:
 
 
 if __name__ == "__main__":
+    SERVER = socket.gethostbyname(socket.gethostname())
+    PORT = read_config_value("fight_server_port")
+    ADDR = (SERVER, PORT)
+
+    server = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+    server.bind(ADDR)
     server.listen()
-    print(f"[LISTENING] Server is listening on {SERVER}")
+    print(f"[LISTENING] Server is listening on {SERVER}, port: {PORT}")
+
     id_count = 0
     fights = {}
-
     while True:
         conn, addr = server.accept()
         thread = threading.Thread(target=main_thread, args=(conn,))

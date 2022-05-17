@@ -15,18 +15,6 @@ from player import Player
 
 from score_item import ScoreItem
 
-HEADER = 64
-PORT = 5051
-SERVER = socket.gethostbyname(socket.gethostname())
-ADDR = (SERVER, PORT)
-FORMAT = 'utf-8'
-DISCONNECT_MESSAGE = "!DISCONNECT"
-WIDTH = read_config_value("screen_width")
-HEIGHT = read_config_value("screen_height")
-
-server = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-server.bind(ADDR)
-
 
 def generate_score_item() -> ScoreItem:
     radius = random.randrange(5, 20, 5)
@@ -137,8 +125,16 @@ def handle_client(conn, addr, player_id: int, score_items: List[ScoreItem]) -> N
 
 
 if __name__ == "__main__":
+    PORT = read_config_value("server_port")
+    SERVER = socket.gethostbyname(socket.gethostname())
+    ADDR = (SERVER, PORT)
+    server = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+    server.bind(ADDR)
     server.listen()
-    print(f"[LISTENING] Server is listening on {SERVER}")
+    print(f"[LISTENING] Server is listening on {SERVER}, port: {PORT}")
+
+    WIDTH = read_config_value("screen_width")
+    HEIGHT = read_config_value("screen_height")
     town_width = read_config_value("town_width")
     town_height = read_config_value("town_height")
     town = Rect(0, 0, town_width, town_height)

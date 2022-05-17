@@ -44,7 +44,6 @@ def redraw_window(
     player_result_communicate.render_communicate(win, False)
 
 
-
 def generate_player_starting_point(
         area: Rect, player_width: int, player_height: int
 ) -> Tuple[int, int]:
