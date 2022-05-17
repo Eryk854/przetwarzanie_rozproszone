@@ -1,9 +1,11 @@
+from typing import List, Optional
+
 from enums.fight_results import FightResult
 
 
 class Fight:
     def __init__(self):
-        self.result = [None, None]
+        self.result: List[Optional[int]] = [None, None]
         self.fight_result: FightResult = FightResult.tie
 
     def take_fight_result(self) -> None:
@@ -12,7 +14,7 @@ class Fight:
         if self.result[0] < self.result[1]:
             self.fight_result = FightResult.second_player
 
-    def player_win(self, player_number) -> bool:
+    def player_win(self, player_number: int) -> bool:
         if player_number == 0 and self.fight_result == FightResult.first_player:
             return True
         elif player_number == 1 and self.fight_result == FightResult.second_player:

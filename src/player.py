@@ -2,6 +2,7 @@ from typing import Tuple
 
 import pygame
 from pygame.color import Color
+from pygame.surface import Surface
 
 from configuration.read_config_value import read_config_value
 
@@ -22,10 +23,10 @@ class Player:
         self.rect_obj: pygame.Rect = pygame.Rect(self.rect)
         self.fight: bool = False
 
-    def draw(self, win):
+    def draw(self, win: Surface) -> None:
         pygame.draw.rect(win, self.color, self.rect)
 
-    def move(self):
+    def move(self) -> None:
         keys = pygame.key.get_pressed()
 
         if keys[pygame.K_LEFT]:
@@ -48,11 +49,11 @@ class Player:
 
         self.update()
 
-    def update(self):
+    def update(self) -> None:
         self.rect = (self.x, self.y, self.width, self.height)
         self.rect_obj = pygame.Rect(self.rect)
 
-    def fight_result_points(self, winner: bool):
+    def fight_result_points(self, winner: bool) -> None:
         if winner:
             self.points += 100
         else:

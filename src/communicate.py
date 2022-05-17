@@ -3,6 +3,7 @@ from typing import Tuple, List
 import pygame
 from pygame import display
 from pygame.color import Color
+from pygame.surface import Surface
 
 
 class Communicate:
@@ -22,7 +23,7 @@ class Communicate:
         self.font_name: str = font_name
         self.antialias = antialias
 
-    def render_communicate(self, win, clear_display: bool = False, update: bool = True):
+    def render_communicate(self, win: Surface, clear_display: bool = False, update: bool = True) -> None:
         if clear_display:
             win.fill(Color(255, 255, 255))
         font = pygame.font.SysFont(self.font_name, self.font_size)
@@ -32,7 +33,7 @@ class Communicate:
             display.update()
 
     @classmethod
-    def render_multiple_communicates(cls, communicates: List["Communicate"], win):
+    def render_multiple_communicates(cls, communicates: List["Communicate"], win: Surface) -> None:
         win.fill(Color(255, 255, 255))
         for communicate in communicates:
             communicate.render_communicate(win, False, False)
