@@ -1,7 +1,7 @@
 server_port: 5051
 fight_server_port: 5052
-server_ip: 172.23.0.1
-fight_server_ip: 172.23.0.1
+server_ip:
+fight_server_ip:
 window_caption: Client game
 screen_width: 800
 screen_height: 800
