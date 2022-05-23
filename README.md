@@ -1,18 +1,18 @@
-##Projekt końcowy z przedmiotu przetwarzanie rozproszone
-###Studia zaoczne rok akademicki 2021/2022
+## Projekt końcowy z przedmiotu przetwarzanie rozproszone
+### Studia zaoczne rok akademicki 2021/2022
 
-##Skład zespołu
+## Skład zespołu
 1. Eryk Janowski
 2. Cezary Kowalczuk
 
-##Jak uruchomić grę 
+## Jak uruchomić grę 
 ### Wymagania wstępne
 Do uruchomienia gry należy w środowisku pythona mieć zainstalowaną bibliotekę pygame oraz bibliotekę PyYAML.
 Biblioteki w odpowiednich wersjach można zainstalować korzystając z pliku requirements.txt 
 oraz narzędzia `pip` umożliwiającego instalowanie pakietów języka python.
 W lokalizacji z plikiem requirements należy uruchomić komendę: `pip install -r requirements.txt`
 
-###Uruchomienie gry
+### Uruchomienie gry
 1. Uruchom skrypt `server.py` , który uruchomi główny serwer z grą
 2. Skopiuj adres ip serwera, który wyświetli się podczas uruchamiania skryptu
 3. Wklej skopiowany adres ip do pliku configuration/config.yaml jako wartość klucza `server_ip`
@@ -29,7 +29,7 @@ Gra składa się z klientów, którzy łączą sie do głównego serwera z grą.
 W grze występuje rówież  drugi serwer, który odpowiada za obsługę walki 
 między graczami. Komunikacja klient-serwer opiera się na socketach.
 
-Główne założenia gry:
+### Główne założenia gry:
 
 wiele graczy (klientów) połączonych do tego samego serwera
 gracze po połączeniu z serwerem, zaczynają grę w losowanym z pewnego przedziału punkcie na mapie
